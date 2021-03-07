@@ -13,5 +13,5 @@ Feature: devTo basic features
 
   Scenario: Search the testing phrase
     Given I go to devto main page
-    When I search for "testing" phrase
-    Then Top 3 blogs found should have corretc phrase in title
+    When I search for "python" phrase
+    Then Top 3 blogs found should have corretc phrase in title or in text below

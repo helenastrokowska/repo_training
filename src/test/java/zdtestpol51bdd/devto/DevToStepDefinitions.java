@@ -21,7 +21,7 @@ public class DevToStepDefinitions {
     WebDriverWait wait;
     String firstBlogTitle;
     String firstCastTitle;
-   String  searchingPhrase;
+    String searchingPhrase;
 
     @Before
     public void setup() {
@@ -90,31 +90,36 @@ public class DevToStepDefinitions {
 
     @When("I search for {string} phrase")
     public void i_search_for_testing_phrase(String phrase) {
-            WebElement searchBar = driver.findElement(By.name("q"));
-            searchBar.sendKeys(phrase);
-            searchingPhrase = phrase;
-            searchBar.sendKeys(Keys.ENTER);
+        WebElement searchBar = driver.findElement(By.name("q"));
+        searchBar.sendKeys(phrase);
+        searchingPhrase = phrase;
+        searchBar.sendKeys(Keys.ENTER);
+
     }
 
 
-    @Then("Top {int} blogs found should have corretc phrase in title")
-    public void top_blogs_found_should_have_corretc_phrase_in_title(Integer int1) {
+    @Then("Top {int} blogs found should have corretc phrase in title or in text below")
+    public void top_blogs_found_should_have_corretc_phrase_in_title_or_in_text_below(Integer int1) {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h3.crayons-story__title"))); //h3
-        wait.until(ExpectedConditions.attributeContains(By.id("substories"),"class","search-results-loaded"));
-        List<WebElement> allPosts = driver.findElements(By.cssSelector(".crayons-story__title > a")); // a
-        boolean isTestingInTitle= false;
-        if(allPosts.size()>=int1){
-            isTestingInTitle=true;
-        for (int i=0;i<int1;i++) {
-            WebElement singlePost = allPosts.get(i);
-            String singlePostTitle = singlePost.getText().toLowerCase(); // a wyciagaj text
-            isTestingInTitle=isTestingInTitle && singlePostTitle.contains(searchingPhrase);
+        wait.until(ExpectedConditions.attributeContains(By.id("substories"), "class", "search-results-loaded"));
+        List<WebElement> allPosts = driver.findElements(By.className("crayons-story__body")); // div - caly wpis
+        if (allPosts.size() >= int1) {
+            for (int i = 0; i < int1; i++) {
+                WebElement singlePost = allPosts.get(i);
+                WebElement singlePostTitle = singlePost.findElement(By.cssSelector(".crayons-story__title > a")); //tytul kafelka
+                String singlePostTitleText = singlePostTitle.getText().toLowerCase(); // wyciagnij tekst z tytulu
+                Boolean isPhraseInTitle = singlePostTitleText.contains(searchingPhrase);
+                if (isPhraseInTitle) { // isPhraseInTitle == true
+                    Assert.assertTrue(isPhraseInTitle);
+                } else {
+                    WebElement snippet = singlePost.findElement(By.xpath("//div[contains(@class,'crayons-story__snippet')]"));
+                    String snippetText = snippet.getText().toLowerCase();
+                    Boolean isPhraseInSnippet = snippetText.contains(searchingPhrase);
+                    Assert.assertTrue(isPhraseInSnippet);
+                }
+            }
         }
+
     }
-        Assert.assertTrue(isTestingInTitle);
 }
-}
-
-
-
 
