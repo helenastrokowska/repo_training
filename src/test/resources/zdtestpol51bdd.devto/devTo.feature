@@ -5,12 +5,13 @@ Feature: devTo basic features
     When I click on first blog displayed
     Then I should be redirected to blog page
 
-  Scenario: Open first seeing podcast
+  Scenario: Open and play first seeig podcast
     Given I go to devto main page
     When I go to podcast section
-    When I click on first cast displayed
-    Then I should be redirected to cast site
-
+    When I click on first podcast on the list
+    And I play the podcast
+    Then Podcast Should be played
+    
   Scenario: Search the testing phrase
     Given I go to devto main page
     When I search for "python" phrase

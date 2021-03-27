@@ -1,6 +1,8 @@
 package zdtestpol51bdd.devto;
 
+import io.cucumber.java.After;
 import io.cucumber.java.Before;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -52,16 +54,26 @@ public class DevToStepDefinitions {
         firstCastTitle = firstCastTitle.replace("podcast", "");
         firstCast.click();
     }
-
-    @When("I click on first cast displayed")
-    public void i_click_on_first_cast_displayed() {
+    @When("I click on first podcast on the list")
+    public void i_click_on_first_podcast_on_the_list() {
         wait.until(ExpectedConditions.titleContains("Podcasts"));
         WebElement firstCast = driver.findElement(By.tagName("h3"));
         firstCastTitle = firstCast.getText();
         firstCastTitle = firstCastTitle.replace("podcast", "");
         firstCast.click();
     }
-
+    @And("I play the podcast")
+    public void iPlayThePodcast() {
+        wait.until(ExpectedConditions.titleContains("Podcasts"));
+        WebElement firstCast = driver.findElement(By.tagName("h3"));
+    }
+    @Then("Podcast Should be played")
+    public void podcast_should_be_played() {
+        wait.until(ExpectedConditions.titleContains(firstCastTitle));
+        WebElement castTitle = driver.findElement(By.tagName("h1"));
+        String castTitleText = castTitle.getText();
+        Assert.assertEquals(firstCastTitle, castTitleText);
+    }
     @When("I go to podcast section")
     public void i_go_to_podcast_section() {
 
@@ -121,5 +133,10 @@ public class DevToStepDefinitions {
         }
 
     }
+
+@After
+    public void tearDown(){
+        driver.quit();
+}
 }
 
