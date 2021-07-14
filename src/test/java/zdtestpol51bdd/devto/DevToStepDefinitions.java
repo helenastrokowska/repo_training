@@ -153,5 +153,38 @@ SinglePodcastPage singlePodcastPage;
       //  System.out.println("koniec");
       driver.quit();
 }
+
+    @Then("Top {int} blogs found should have corretc phrase in title or in tag")
+    public void topBlogsFoundShouldHaveCorretcPhraseInTitleOrInTag(int int1) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h3.crayons-story__title"))); //h3
+        wait.until(ExpectedConditions.attributeContains(By.id("substories"), "class", "search-results-loaded"));
+        List<WebElement> allPosts = driver.findElements(By.className("crayons-story__body"));
+        if (allPosts.size() >= int1) {
+            for (int i = 0; i < int1; i++) {
+                WebElement singlePost = allPosts.get(i);
+                WebElement singlePostTitle = singlePost.findElement(By.cssSelector(".crayons-story__title > a")); //tytul kafelka
+                String singlePostTitleText = singlePostTitle.getText().toLowerCase(); // wyciagnij tekst z tytulu
+                boolean isPhraseInTitle = singlePostTitleText.contains(searchingPhrase);
+                if (isPhraseInTitle) { // isPhraseInTitle == true
+                    Assert.assertTrue(isPhraseInTitle);
+                } else {
+                    String part1="/html/body/div[9]/div/main/div[2]/div[2]/div[2]/article[";
+                    String part2="]/div/div/div[2]/div[1]";
+                    WebElement tags=singlePost.findElement(By.xpath(part1+(i+1)+part2));
+                    String tagsbody=tags.getText().toLowerCase();
+                  //  System.out.println(tagsbody);
+                    boolean istPhraseInTags=tagsbody.contains(searchingPhrase);
+                    if(istPhraseInTags) {
+                        Assert.assertTrue(istPhraseInTags);
+                    }else{
+                        WebElement WebElementBody=singlePost.findElement(By.className("crayons-article__main"));
+                        String textBody=WebElementBody.getText().toLowerCase();
+                        Assert.assertTrue(textBody.contains(searchingPhrase));
+                    }
+                }
+            }
+        }
+
+    }
 }
 
