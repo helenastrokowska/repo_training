@@ -11,61 +11,66 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+//import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-//import org.w3c.dom.html.HTMLInputElement;
+import zdtestpol51.browserUtills.BaseDriver;
+import zdtestpol51bdd.devto.pages.MainPage;
+import zdtestpol51bdd.devto.pages.PodcastListPage;
+import zdtestpol51bdd.devto.pages.SingleBlogPage;
+import zdtestpol51bdd.devto.pages.SinglePodcastPage;
+
 
 import java.util.List;
 
 public class DevToStepDefinitions {
     WebDriver driver;
     WebDriverWait wait;
-    String firstBlogTitle;
     String firstCastTitle;
     String searchingPhrase;
+    MainPage mainPage;
+SingleBlogPage singleBlogPage;
+PodcastListPage podcastListPage;
+SinglePodcastPage singlePodcastPage;
+
 
     @Before
     public void setup() {
-        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
-        System.out.println("Before");
-        driver = new ChromeDriver();
+     driver= BaseDriver.setlocalDriver();
         wait = new WebDriverWait(driver, 10);
     }
 
     @Given("I go to devto main page")
     public void i_go_to_devto_main_page() {
-        System.out.println("Given");
-        driver.get("https://dev.to");
+
+                mainPage=new MainPage(driver);
     }
 
     @When("I click on first blog displayed")
     public void i_click_on_first_blog_displayed() {
-        // System.out.println("When");
-        WebElement firstBlog = driver.findElement(By.cssSelector("h2.crayons-story__title > a"));
-        firstBlogTitle = firstBlog.getText();
-        firstBlog.click();
+        mainPage.selectFirstBlog();
+        mainPage.firstBlogTitle = mainPage.firstBlog.getText();
     }
 
     @When("I click text podcast in main page")
     public void i_click_text_podcast_in_main_page() {
-        WebElement firstCast = driver.findElement(By.linkText("Podcasts"));
-        firstCastTitle = firstCast.getText();
-        firstCastTitle = firstCastTitle.replace("podcast", "");
-        firstCast.click();
+
+        mainPage.gotoPodcastSection();
     }
+
     @When("I click on first podcast on the list")
     public void i_click_on_first_podcast_on_the_list() {
         wait.until(ExpectedConditions.titleContains("Podcasts"));
-        WebElement firstCast = driver.findElement(By.tagName("h3"));
-        firstCastTitle = firstCast.getText();
-        firstCastTitle = firstCastTitle.replace("podcast", "");
-        firstCast.click();
+        podcastListPage = new PodcastListPage(driver);
+        firstCastTitle = podcastListPage.firstCast.getText();
+        firstCastTitle = firstCastTitle.replace("podcast","");
+        podcastListPage.selectFirstPodcast();
     }
     @And("I play the podcast")
     public void iPlayThePodcast() {
-        wait.until(ExpectedConditions.titleContains("Podcasts"));
-        WebElement firstCast = driver.findElement(By.tagName("h3"));
+        wait.until(ExpectedConditions.titleContains(firstCastTitle));
+        singlePodcastPage=new SinglePodcastPage(driver);
+        singlePodcastPage.playThePodcast();
     }
     @Then("Podcast Should be played")
     public void podcast_should_be_played() {
@@ -92,12 +97,12 @@ public class DevToStepDefinitions {
 
     @Then("I should be redirected to blog page")
     public void iShouldBeRedirectedToBlogPage() {
-        // System.out.println("Then");
-        wait.until(ExpectedConditions.titleContains(firstBlogTitle));
-        WebElement blogTitle = driver.findElement(By.tagName("h1"));
+
+        wait.until(ExpectedConditions.titleContains(mainPage.firstBlogTitle));//tu byłopuste
+        singleBlogPage=new SingleBlogPage(driver);
+        WebElement blogTitle = driver.findElement(By.cssSelector("h1"));
         String blogTitleText = blogTitle.getText();
-        // System.out.println("to jest tytuł mojego bloga: " + blogTitleText);
-        Assert.assertEquals(firstBlogTitle, blogTitleText);
+        Assert.assertEquals(mainPage.firstBlogTitle, blogTitleText);
     }
 
     @When("I search for {string} phrase")
@@ -114,20 +119,29 @@ public class DevToStepDefinitions {
     public void top_blogs_found_should_have_corretc_phrase_in_title_or_in_text_below(Integer int1) {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h3.crayons-story__title"))); //h3
         wait.until(ExpectedConditions.attributeContains(By.id("substories"), "class", "search-results-loaded"));
-        List<WebElement> allPosts = driver.findElements(By.className("crayons-story__body")); // div - caly wpis
+        List<WebElement> allPosts = driver.findElements(By.className("crayons-story__body"));
         if (allPosts.size() >= int1) {
             for (int i = 0; i < int1; i++) {
                 WebElement singlePost = allPosts.get(i);
                 WebElement singlePostTitle = singlePost.findElement(By.cssSelector(".crayons-story__title > a")); //tytul kafelka
                 String singlePostTitleText = singlePostTitle.getText().toLowerCase(); // wyciagnij tekst z tytulu
-                Boolean isPhraseInTitle = singlePostTitleText.contains(searchingPhrase);
+                boolean isPhraseInTitle = singlePostTitleText.contains(searchingPhrase);
                 if (isPhraseInTitle) { // isPhraseInTitle == true
                     Assert.assertTrue(isPhraseInTitle);
                 } else {
-                    WebElement snippet = singlePost.findElement(By.xpath("//div[contains(@class,'crayons-story__snippet')]"));
-                    String snippetText = snippet.getText().toLowerCase();
-                    Boolean isPhraseInSnippet = snippetText.contains(searchingPhrase);
-                    Assert.assertTrue(isPhraseInSnippet);
+                    String part1="/html/body/div[9]/div/main/div[2]/div[2]/div[2]/article[";
+                    String part2="]/div/div/div[2]/div[1]";
+                    WebElement tags=singlePost.findElement(By.xpath(part1+(i+1)+part2));
+                    String tagsbody=tags.getText().toLowerCase();
+                    System.out.println(tagsbody);
+                    boolean istPhraseInTags=tagsbody.contains(searchingPhrase);
+                    if(istPhraseInTags) {
+                        Assert.assertTrue(istPhraseInTags);
+                    }else{
+                        WebElement WebElementBody=singlePost.findElement(By.className("crayons-article__main"));
+                        String textBody=WebElementBody.getText().toLowerCase();
+                        Assert.assertTrue(textBody.contains(searchingPhrase));
+                    }
                 }
             }
         }
@@ -136,7 +150,8 @@ public class DevToStepDefinitions {
 
 @After
     public void tearDown(){
-        driver.quit();
+      //  System.out.println("koniec");
+      driver.quit();
 }
 }
 
