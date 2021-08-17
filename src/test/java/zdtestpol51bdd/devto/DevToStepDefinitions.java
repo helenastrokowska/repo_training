@@ -32,6 +32,7 @@ public class DevToStepDefinitions {
 SingleBlogPage singleBlogPage;
 PodcastListPage podcastListPage;
 SinglePodcastPage singlePodcastPage;
+boolean Ok;
 
 
     @Before
@@ -78,6 +79,8 @@ SinglePodcastPage singlePodcastPage;
         WebElement castTitle = driver.findElement(By.tagName("h1"));
         String castTitleText = castTitle.getText();
         Assert.assertEquals(firstCastTitle, castTitleText);
+        Ok=castTitleText.contentEquals(firstCastTitle);
+        if(Ok)driver.quit();
     }
     @When("I go to podcast section")
     public void i_go_to_podcast_section() {
@@ -92,6 +95,8 @@ SinglePodcastPage singlePodcastPage;
         WebElement castTitle = driver.findElement(By.tagName("h1"));
         String castTitleText = castTitle.getText();
         Assert.assertEquals(firstCastTitle, castTitleText);
+        Ok=Ok && castTitleText.contentEquals(firstCastTitle);
+        if(Ok)driver.quit();
     }
 
 
@@ -103,6 +108,8 @@ SinglePodcastPage singlePodcastPage;
         WebElement blogTitle = driver.findElement(By.cssSelector("h1"));
         String blogTitleText = blogTitle.getText();
         Assert.assertEquals(mainPage.firstBlogTitle, blogTitleText);
+        Ok=Ok && blogTitleText.contentEquals(mainPage.firstBlogTitle);
+        if(Ok)driver.quit();
     }
 
     @When("I search for {string} phrase")
@@ -115,47 +122,17 @@ SinglePodcastPage singlePodcastPage;
     }
 
 
-    @Then("Top {int} blogs found should have corretc phrase in title or in text below")
-    public void top_blogs_found_should_have_corretc_phrase_in_title_or_in_text_below(Integer int1) {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h3.crayons-story__title"))); //h3
-        wait.until(ExpectedConditions.attributeContains(By.id("substories"), "class", "search-results-loaded"));
-        List<WebElement> allPosts = driver.findElements(By.className("crayons-story__body"));
-        if (allPosts.size() >= int1) {
-            for (int i = 0; i < int1; i++) {
-                WebElement singlePost = allPosts.get(i);
-                WebElement singlePostTitle = singlePost.findElement(By.cssSelector(".crayons-story__title > a")); //tytul kafelka
-                String singlePostTitleText = singlePostTitle.getText().toLowerCase(); // wyciagnij tekst z tytulu
-                boolean isPhraseInTitle = singlePostTitleText.contains(searchingPhrase);
-                if (isPhraseInTitle) { // isPhraseInTitle == true
-                    Assert.assertTrue(isPhraseInTitle);
-                } else {
-                    String part1="/html/body/div[9]/div/main/div[2]/div[2]/div[2]/article[";
-                    String part2="]/div/div/div[2]/div[1]";
-                    WebElement tags=singlePost.findElement(By.xpath(part1+(i+1)+part2));
-                    String tagsbody=tags.getText().toLowerCase();
-                    System.out.println(tagsbody);
-                    boolean istPhraseInTags=tagsbody.contains(searchingPhrase);
-                    if(istPhraseInTags) {
-                        Assert.assertTrue(istPhraseInTags);
-                    }else{
-                        WebElement WebElementBody=singlePost.findElement(By.className("crayons-article__main"));
-                        String textBody=WebElementBody.getText().toLowerCase();
-                        Assert.assertTrue(textBody.contains(searchingPhrase));
-                    }
-                }
-            }
-        }
-
-    }
-
 @After
     public void tearDown(){
-      //  System.out.println("koniec");
-      driver.quit();
+      if(Ok) {
+          driver.quit();
+      }
+      System.out.println("finish");
+    //
 }
 
-    @Then("Top {int} blogs found should have corretc phrase in title or in tag")
-    public void topBlogsFoundShouldHaveCorretcPhraseInTitleOrInTag(int int1) {
+    @Then("Top {int} blogs found should have correct phrase in title or in tag")
+    public void topBlogsFoundShouldHaveCorrectPhraseInTitleOrInTag(int int1) {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h3.crayons-story__title"))); //h3
         wait.until(ExpectedConditions.attributeContains(By.id("substories"), "class", "search-results-loaded"));
         List<WebElement> allPosts = driver.findElements(By.className("crayons-story__body"));
@@ -166,20 +143,30 @@ SinglePodcastPage singlePodcastPage;
                 String singlePostTitleText = singlePostTitle.getText().toLowerCase(); // wyciagnij tekst z tytulu
                 boolean isPhraseInTitle = singlePostTitleText.contains(searchingPhrase);
                 if (isPhraseInTitle) { // isPhraseInTitle == true
+                    System.out.println("phrase is in title - post "+(i+1));
                     Assert.assertTrue(isPhraseInTitle);
+                    Ok=Ok && isPhraseInTitle;
                 } else {
                     String part1="/html/body/div[9]/div/main/div[2]/div[2]/div[2]/article[";
                     String part2="]/div/div/div[2]/div[1]";
                     WebElement tags=singlePost.findElement(By.xpath(part1+(i+1)+part2));
                     String tagsbody=tags.getText().toLowerCase();
-                  //  System.out.println(tagsbody);
                     boolean istPhraseInTags=tagsbody.contains(searchingPhrase);
                     if(istPhraseInTags) {
+                        System.out.println("phrase is in tag - post "+(i+1));
                         Assert.assertTrue(istPhraseInTags);
+                        Ok=Ok && istPhraseInTags;
                     }else{
-                        WebElement WebElementBody=singlePost.findElement(By.className("crayons-article__main"));
-                        String textBody=WebElementBody.getText().toLowerCase();
-                        Assert.assertTrue(textBody.contains(searchingPhrase));
+
+                        singlePostTitle.click();
+                        wait.until(ExpectedConditions.titleContains(singlePostTitle.getText().substring(1,5)));
+                        WebElement postText= driver.findElement(By.className("crayons-article__main"));
+                        String textBody=postText.getText().toLowerCase();
+                        boolean isPhraseinbody=textBody.contains(searchingPhrase);
+                        Assert.assertTrue(isPhraseinbody);
+                       Ok=Ok && isPhraseinbody;
+                        System.out.println("post without phrase int title and tag - "+(i+1));
+                       driver.navigate().back();
                     }
                 }
             }

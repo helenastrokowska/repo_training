@@ -15,4 +15,4 @@ Feature: devTo basic features
   Scenario: Search the testing phrase
     Given I go to devto main page
     When I search for "python" phrase
-    Then Top 3 blogs found should have corretc phrase in title or in tag
+    Then Top 5 blogs found should have correct phrase in title or in tag
